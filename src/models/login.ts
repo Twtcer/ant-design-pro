@@ -1,9 +1,7 @@
-import { Reducer } from 'redux';
-import { routerRedux } from 'dva/router';
-import { Effect } from 'dva';
 import { stringify } from 'querystring';
+import { history, Reducer, Effect } from 'umi';
 
-import { fakeAccountLogin, getFakeCaptcha } from '@/services/login';
+import { fakeAccountLogin } from '@/services/login';
 import { setAuthority } from '@/utils/authority';
 import { getPageQuery } from '@/utils/utils';
 
@@ -18,7 +16,6 @@ export interface LoginModelType {
   state: StateType;
   effects: {
     login: Effect;
-    getCaptcha: Effect;
     logout: Effect;
   };
   reducers: {
@@ -53,29 +50,24 @@ const Model: LoginModelType = {
               redirect = redirect.substr(redirect.indexOf('#') + 1);
             }
           } else {
-            window.location.href = redirect;
+            window.location.href = '/';
             return;
           }
         }
-        yield put(routerRedux.replace(redirect || '/'));
+        history.replace(redirect || '/');
       }
     },
 
-    *getCaptcha({ payload }, { call }) {
-      yield call(getFakeCaptcha, payload);
-    },
-    *logout(_, { put }) {
+    logout() {
       const { redirect } = getPageQuery();
-      // redirect
+      // Note: There may be security issues, please note
       if (window.location.pathname !== '/user/login' && !redirect) {
-        yield put(
-          routerRedux.replace({
-            pathname: '/user/login',
-            search: stringify({
-              redirect: window.location.href,
-            }),
+        history.replace({
+          pathname: '/user/login',
+          search: stringify({
+            redirect: window.location.href,
           }),
-        );
+        });
       }
     },
   },
